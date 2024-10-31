@@ -123,24 +123,23 @@ def panama_backadjust(ohlcv_df, roll_t_d):
         roll_iso_date = find_next_trading_day(roll_from_exp_date - BDay(roll_t_d))
         roll_date = roll_iso_date.strftime('%Y-%m-%d')
 
-        roll_row = find_valid_roll_row(pivoted_dfs, roll_date)
-
         # print('rolling', roll_from_exp_date, 'into', roll_into_exp_date, 'on', roll_date)
 
         if pivoted_dfs['backadjusted'].isna().all():
-            offset = (roll_iso_date + BDay(1)).strftime('%Y-%m-%d')
+            offset = (roll_iso_date - BDay(1)).strftime('%Y-%m-%d')
 
             pivoted_dfs.loc[offset:, 'backadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
             pivoted_dfs.loc[offset:, 'unadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
+
             if datetime.strptime(offset, "%Y-%m-%d") >= datetime.today():
-                # print('roll_date future')
+                print('roll_date future')
                 pivoted_dfs.loc[:offset, 'backadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
                 pivoted_dfs.loc[:offset, 'unadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
 
         if 'backadjusted' in pivoted_dfs.columns and pivoted_dfs['backadjusted'].notna().any():
-            # print(roll_row['backadjusted'])
-            # exit()
-            backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
+            roll_row = find_valid_roll_row(pivoted_dfs, roll_date)
+            # backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
+            backadjust_diff = roll_row['backadjusted'] - roll_row[roll_from_exp_date]
 
             # print('backadjust_diff', backadjust_diff)
             pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date] + backadjust_diff
