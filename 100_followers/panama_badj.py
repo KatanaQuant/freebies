@@ -133,11 +133,14 @@ def panama_backadjust(ohlcv_df, roll_t_d):
             pivoted_dfs.loc[offset:, 'backadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
             pivoted_dfs.loc[offset:, 'unadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
             if datetime.strptime(offset, "%Y-%m-%d") >= datetime.today():
+                # print('roll_date future')
                 pivoted_dfs.loc[:offset, 'backadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
                 pivoted_dfs.loc[:offset, 'unadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
 
         if 'backadjusted' in pivoted_dfs.columns and pivoted_dfs['backadjusted'].notna().any():
-            backadjust_diff = roll_row['backadjusted'] - roll_row[roll_from_exp_date]
+            # print(roll_row['backadjusted'])
+            # exit()
+            backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
 
             # print('backadjust_diff', backadjust_diff)
             pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date] + backadjust_diff
