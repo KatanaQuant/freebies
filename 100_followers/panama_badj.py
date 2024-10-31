@@ -200,7 +200,7 @@ def main():
 
         backadjusted_price_series = panama_backadjust(rolling_ohlcv_df, roll_t_d)
         # print(backadjusted_price_series)
-        backadjusted_price_series[['backadjusted', 'unadjusted']].to_csv(f"./{symbol}_proces.csv")
+        backadjusted_price_series[['backadjusted', 'unadjusted']].to_csv(f"./{symbol}_prices.csv")
 
         if args.plot:
             print('plotting', symbol)
