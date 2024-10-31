@@ -123,27 +123,29 @@ def panama_backadjust(ohlcv_df, roll_t_d):
         roll_iso_date = find_next_trading_day(roll_from_exp_date - BDay(roll_t_d))
         roll_date = roll_iso_date.strftime('%Y-%m-%d')
 
-        # print('rolling', roll_from_exp_date, 'into', roll_into_exp_date, 'on', roll_date)
+        print('rolling', roll_from_exp_date, 'into', roll_into_exp_date, 'on', roll_date)
 
-        if pivoted_dfs['backadjusted'].isna().all():
-            offset = (roll_iso_date - BDay(1)).strftime('%Y-%m-%d')
+        if i == 0:
+            if datetime.strptime(roll_date, "%Y-%m-%d") >= datetime.today():
+                pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date]
+                pivoted_dfs.loc[:roll_date, 'unadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date]
+            else:
+                pivoted_dfs.loc[roll_date:, 'backadjusted'] = pivoted_dfs.loc[roll_date:, roll_into_exp_date]
+                pivoted_dfs.loc[roll_date:, 'unadjusted'] = pivoted_dfs.loc[roll_date:, roll_into_exp_date]
 
-            pivoted_dfs.loc[offset:, 'backadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
-            pivoted_dfs.loc[offset:, 'unadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
+            continue
 
-            if datetime.strptime(offset, "%Y-%m-%d") >= datetime.today():
-                print('roll_date future')
-                pivoted_dfs.loc[:offset, 'backadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
-                pivoted_dfs.loc[:offset, 'unadjusted'] = pivoted_dfs.loc[:offset, roll_into_exp_date]
+        roll_row = find_valid_roll_row(pivoted_dfs, roll_date)
+        roll_date = roll_row.name
 
-        if 'backadjusted' in pivoted_dfs.columns and pivoted_dfs['backadjusted'].notna().any():
-            roll_row = find_valid_roll_row(pivoted_dfs, roll_date)
-            # backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
+        if i == 1:
+            backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
+
+        if i > 1:
             backadjust_diff = roll_row['backadjusted'] - roll_row[roll_from_exp_date]
 
-            # print('backadjust_diff', backadjust_diff)
-            pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date] + backadjust_diff
-            pivoted_dfs.loc[:roll_date, 'unadjusted'] = pivoted_dfs.loc[:roll_date, roll_into_exp_date]
+        pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_from_exp_date] + backadjust_diff
+        pivoted_dfs.loc[:roll_date, 'unadjusted'] = pivoted_dfs.loc[:roll_date, roll_from_exp_date]
 
     return pivoted_dfs
 
@@ -163,8 +165,8 @@ def main():
     print("    └── CBOT_DL_ZCZ2025, D.csv")
 
     roll_frequencies = {
-        'MES': {'roll_month_codes': ['H', 'M', 'U', 'Z'], 'roll_t_d': 3},  # 3 days before expiration
-        'ZC': {'roll_month_codes': ['Z'], 'roll_t_d': 30},  # 30 days before expiration
+        'MES': {'roll_month_codes': ['H', 'M', 'U', 'Z'], 'roll_t_d': 3},  # days before expiration
+        'ZC': {'roll_month_codes': ['Z'], 'roll_t_d': 14},  # days before expiration
     }
 
     trading_day = datetime.today() - BDay(1)  # last business day close
