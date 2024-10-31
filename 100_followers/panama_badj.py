@@ -109,6 +109,7 @@ def panama_backadjust(ohlcv_df, roll_t_d):
     pivoted_dfs = ohlcv_df.pivot(columns='exp_date_iso', values='close')
     pivoted_dfs.sort_index(inplace=True)
     pivoted_dfs['backadjusted'] = pd.Series(dtype='float64')
+    pivoted_dfs['unadjusted'] = pd.Series(dtype='float64')
 
     expiration_dates = ohlcv_df['exp_date_iso'].unique()
     expiration_dates = pd.Series(expiration_dates).sort_values(ascending=False).reset_index(drop=True)
@@ -128,11 +129,13 @@ def panama_backadjust(ohlcv_df, roll_t_d):
 
             offset = (roll_iso_date + BDay(1)).strftime('%Y-%m-%d')
             pivoted_dfs.loc[offset:, 'backadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
+            pivoted_dfs.loc[offset:, 'unadjusted'] = pivoted_dfs.loc[offset:, roll_into_exp_date]
 
         if 'backadjusted' in pivoted_dfs.columns and pivoted_dfs['backadjusted'].notna().any():
             backadjust_diff = roll_row[roll_into_exp_date] - roll_row[roll_from_exp_date]
+            pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[: roll_date, roll_from_exp_date] + backadjust_diff
+            pivoted_dfs.loc[:roll_date, 'unadjusted'] = pivoted_dfs.loc[: roll_date, roll_from_exp_date]
 
-        pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[: roll_date, roll_from_exp_date] + backadjust_diff
     return pivoted_dfs
 
 
