@@ -123,7 +123,7 @@ def panama_backadjust(ohlcv_df, roll_t_d):
         roll_iso_date = find_next_trading_day(roll_from_exp_date - BDay(roll_t_d))
         roll_date = roll_iso_date.strftime('%Y-%m-%d')
 
-        print('rolling', roll_from_exp_date, 'into', roll_into_exp_date, 'on', roll_date)
+        # print('rolling', roll_from_exp_date, 'into', roll_into_exp_date, 'on', roll_date)
 
         if i == 0:
             if datetime.strptime(roll_date, "%Y-%m-%d") >= datetime.today():
@@ -132,7 +132,6 @@ def panama_backadjust(ohlcv_df, roll_t_d):
             else:
                 pivoted_dfs.loc[roll_date:, 'backadjusted'] = pivoted_dfs.loc[roll_date:, roll_into_exp_date]
                 pivoted_dfs.loc[roll_date:, 'unadjusted'] = pivoted_dfs.loc[roll_date:, roll_into_exp_date]
-
             continue
 
         roll_row = find_valid_roll_row(pivoted_dfs, roll_date)
@@ -144,6 +143,14 @@ def panama_backadjust(ohlcv_df, roll_t_d):
         if i > 1:
             backadjust_diff = roll_row['backadjusted'] - roll_row[roll_from_exp_date]
 
+        if pd.isna(roll_row['backadjusted']):
+            # print('found NaN backadjusted', 'on', roll_date, 'from', roll_from_exp_date, 'into', roll_into_exp_date)
+            backadjusted_values = pivoted_dfs.loc[roll_date:, 'backadjusted']
+            backadjusted_values = backadjusted_values[~backadjusted_values.isna()]
+            backadjust_diff = backadjusted_values.iloc[0] - roll_row[roll_from_exp_date]
+            roll_date = backadjusted_values.index[0]
+
+        # print('inserting values from beginning to', roll_date, 'using values from', roll_from_exp_date)
         pivoted_dfs.loc[:roll_date, 'backadjusted'] = pivoted_dfs.loc[:roll_date, roll_from_exp_date] + backadjust_diff
         pivoted_dfs.loc[:roll_date, 'unadjusted'] = pivoted_dfs.loc[:roll_date, roll_from_exp_date]
 
