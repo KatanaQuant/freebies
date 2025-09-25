@@ -93,7 +93,7 @@ except AttributeError:
 if __name__ == "__main__":
     args = parse_args()
     symbol = args.symbol
-    output_dir = os.path.join(".data", symbol)
+    output_dir = os.path.join("data", symbol)
     os.makedirs(output_dir, exist_ok=True)
 
     overall_start = datetime.strptime(args.start_date, "%Y-%m-%d")
